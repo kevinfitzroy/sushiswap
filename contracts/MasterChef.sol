@@ -62,6 +62,8 @@ contract MasterChef is Ownable {
     SushiToken public sushi;
     // Dev address.
     address public devaddr;
+    // Router Contract address
+    address public router;
     // Block number when bonus SUSHI period ends.
     uint256 public bonusEndBlock;
     // SUSHI tokens created per block.
@@ -96,6 +98,23 @@ contract MasterChef is Ownable {
         sushiPerBlock = _sushiPerBlock;
         bonusEndBlock = _bonusEndBlock;
         startBlock = _startBlock;
+    }
+
+    // Throws if called by any account other than the router
+    modifier onlyRouter() {
+        require(router == _msgSender(),"Master: caller is not the router");
+        _;
+    }
+
+    // Set the router contract. Can only be called by the owner.
+    function setRouter(address _router) public onlyOwner {
+        router = _router;
+    }
+
+    /// @notice Creates `_amount` token to `_to`. Must only be called by the Router .
+    function mint(address _to, uint256 _amount) public onlyRouter {
+        sushi.mint(_to, _amount);
+        //TODO totalSupply control
     }
 
     function poolLength() external view returns (uint256) {
