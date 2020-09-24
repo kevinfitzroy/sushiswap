@@ -8,12 +8,23 @@ import './interfaces/IUniswapV2Router02.sol';
 import './interfaces/IUniswapV2Factory.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
+import "../BitcoinMinerERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
-contract UniswapV2Router02 is IUniswapV2Router02 {
+contract UniswapV2Router02 is IUniswapV2Router02, Ownable {
     using SafeMathUniswap for uint;
+    using SafeMath for uint256;
 
-    address public immutable override factory;
-    address public immutable override WETH;
+    address public immutable factory;
+    address public immutable WETH;
+
+    struct MinePoolInfo {
+        BitcoinMinerERC20 mineToken; // mine contract address
+        uint256 buyFeeRate; // buy mine token fee rate
+        uint256 buyRewardRate;  // buy mine token reward rate
+    }
+
+    MinePoolInfo[] public minePoolInfo;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
@@ -442,5 +453,36 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
         returns (uint[] memory amounts)
     {
         return UniswapV2Library.getAmountsIn(factory, amountOut, path);
+    }
+
+
+    function minePoolLength() external view returns (uint256) {
+        return minePoolInfo.length;
+    }
+
+    // Add a new mine token to the pool. Can only be called by the owner.
+    // XXX DO NOT add the same mine token more than once. Rewards will be messed up if you do.
+    function add(BitcoinMinerERC20 _mineToken, uint _buyRewardRate) public onlyOwner {
+        minePoolInfo.push(MinePoolInfo({
+            mineToken: _mineToken,
+            buyRerardRate: _buyRewardRate
+        }));
+    }
+
+    // Update the given mine pool's buy reward rate. Can only be called by the owner.
+    function set(uint256 _pid, uint _buyRewardRate) public onlyOwner {
+        minePoolInfo[_pid].buyRewardRate = _buyRewardRate;
+    }
+
+    // Buy mine tokens
+    function buy(uint256 _pid, uint256 _amount) public {
+        MinePoolInfo storage pool = minePoolInfo[_pid];
+        uint256 usdtBalance = pool.mineToken.usdt().balanceOf(msg.sender);
+        uint256 usdtNeed = pool.mineToken.buyPrice().mul(_amount);
+        uint256 usdtFee = usdtNeed.mul(pool.buyFeeRate).div(100);
+        uint256 usdtReward = usdtFee.mul(pool.buyRewardRate).div(100);
+        pool.mineToken.usdt.transfer(pool.mineToken.issuer(), usdtNeed);
+        // todo 将usdtReward置换成sushi发送给申购者，多余的发送给dev
+        pool.mineToken.mint(msg.sender, _amount);
     }
 }

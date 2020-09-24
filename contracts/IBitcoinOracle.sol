@@ -5,7 +5,7 @@ pragma solidity 0.6.12;
  */
 interface IBitcoinOracle {
     /**
-     * @dev Returns the miner earn of 1TH per second.
+     * @dev Returns the miner earn
      */
-    function earnPerTPerSecond() external view returns (uint256);
+    function calReward(uint256 h, uint startTime, uint endTime) external view returns (uint256);
 }
