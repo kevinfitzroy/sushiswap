@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./SushiToken.sol";
+import "./RouterRecipient.sol";
+import "./SwapMintDistributionRecipient.sol";
 
 
 interface IMigratorChef {
@@ -29,7 +31,7 @@ interface IMigratorChef {
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
-contract MasterChef is Ownable {
+contract MasterChef is Ownable, RouterRecipient, SwapMintDistributionRecipient {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -62,8 +64,6 @@ contract MasterChef is Ownable {
     SushiToken public sushi;
     // Dev address.
     address public devaddr;
-    // Router Contract address
-    address public router;
     // Block number when bonus SUSHI period ends.
     uint256 public bonusEndBlock;
     // SUSHI tokens created per block.
@@ -91,30 +91,30 @@ contract MasterChef is Ownable {
         address _devaddr,
         uint256 _sushiPerBlock,
         uint256 _startBlock,
-        uint256 _bonusEndBlock
+        uint256 _bonusEndBlock,
+        address _swapMintDistribution
     ) public {
         sushi = _sushi;
         devaddr = _devaddr;
         sushiPerBlock = _sushiPerBlock;
         bonusEndBlock = _bonusEndBlock;
         startBlock = _startBlock;
-    }
-
-    // Throws if called by any account other than the router
-    modifier onlyRouter() {
-        require(router == _msgSender(),"Master: caller is not the router");
-        _;
+        swapMintDistribution = _swapMintDistribution;
     }
 
     // Set the router contract. Can only be called by the owner.
     function setRouter(address _router) public onlyOwner {
-        router = _router;
+        routerAddress = _router;
     }
 
-    /// @notice Creates `_amount` token to `_to`. Must only be called by the Router .
-    function mint(address _to, uint256 _amount) public onlyRouter {
-        sushi.mint(_to, _amount);
-        //TODO totalSupply control
+    /// _feeToMstAmount,calc through uniswap
+    function swapMint(address _to, uint256 _feeToMstAmount) public onlyRouter {
+        // mint at swaping ~> 13%
+        // LP liqudity reward ~> 87%
+        uint256 amount = mint(_feeToMstAmount);//call swapMintDistributionRecipient.mint
+        if(amount > 0 ){
+            sushi.mint(_to, amount);
+        }
     }
 
     function poolLength() external view returns (uint256) {
