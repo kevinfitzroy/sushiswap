@@ -6,7 +6,7 @@ contract SwapMintDistributionRecipient {
     //[0-255]  0% - 255%
     uint8 public swapMintRate;
     ///const
-    uint256 public TOTAL_SUPPLY_FOR_SWAP_MINT = 210,000,000 * 0.13 * 10^18;//TODO syntax error!
+    uint256 public TOTAL_SUPPLY_FOR_SWAP_MINT = 273 * (10 ** 5) * (10 ** 18);//210,000,000 * 0.13 * 10^18;//TODO syntax error!
     ///accumulated supply for swap mint
     uint256 public supplyForSwapMint;
 
