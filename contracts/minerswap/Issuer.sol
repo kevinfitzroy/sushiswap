@@ -5,9 +5,10 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../uniswapv2/libraries/TransferHelper.sol";
-import "./interfaces/IMineToken.sol"
+import "./interfaces/IMineToken.sol";
+import "./interfaces/IIssuer.sol";
 
-contract Issuer is Ownable{
+contract Issuer is IIssuer, Ownable{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -69,5 +70,9 @@ contract Issuer is Ownable{
 
     function removeLiquidityETH() public onlyOwner {
 
+    }
+
+    function getMineTokenInLiquidityPool(IMineToken mineToken) public view returns(uint256) {
+        
     }
 }
