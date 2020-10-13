@@ -103,7 +103,7 @@ contract MasterChef is Ownable, RouterRecipient, SwapMintDistributionRecipient {
     }
 
     // Set the router contract. Can only be called by the owner.
-    function setRouter(address _router) public onlyOwner {
+    function setRouter(address _router) public override onlyOwner {
         routerAddress = _router;
     }
 

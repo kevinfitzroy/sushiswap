@@ -1,6 +1,9 @@
 pragma solidity 0.6.12;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
 contract SwapMintDistributionRecipient {
+    using SafeMath for uint256;
     ///
     address public swapMintDistribution;
     //[0-255]  0% - 255%

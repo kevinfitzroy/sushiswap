@@ -1,10 +1,10 @@
 pragma solidity 0.6.12;
 
 
-contract  RouterRecipient {
+abstract contract RouterRecipient {
     address public routerAddress;
 
-    function setRouter(address _router) public;
+    function setRouter(address _router) public virtual;
 
     // Throws if called by any account other than the router
     modifier onlyRouter() {

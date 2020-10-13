@@ -8,52 +8,58 @@ import "../uniswapv2/libraries/TransferHelper.sol";
 import "./interfaces/IMineToken.sol";
 import "./interfaces/IIssuer.sol";
 
-contract Issuer is IIssuer, Ownable{
+abstract contract Issuer is IIssuer, Ownable{
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
+    using SafeERC20 for IMineToken;
 
-    address public ownerPool;
-
-    string public immutable hostname;//hostname
+    address public issuerManager;
+    uint256 public serialNumber;
+    string public hostname;//hostname
 
     event Deployed(string symbol,string name,address tokenAddress);
 
-    struct MinePoolInfo {
-        IMineToken mineToken; // mine contract address
-    }
+    // struct MineTokenInfo {
+    //     IMineToken mineToken; // mine contract address
+    // }
 
-    MinePoolInfo[] public minePoolInfo;
+    mapping(string => IMineToken) public mineTokenMap;
 
     constructor(
-        string _hostname
+        string memory _hostname
     ) public {
-        ownerPool = msg.sender;
+        issuerManager = msg.sender;
         hostname = _hostname;
     }
+
+    function incSerialNumber() internal returns(uint256){
+        serialNumber++;
+        return serialNumber;
+    }
     
+    function getUniqueSymbol(string memory _symbol) internal returns (string memory symbol){
+        symbol = string(abi.encodePacked(_symbol, incSerialNumber()));
+    }
+
     //TODO can subclass be called a function that with internal type?
-    function addPoolInfo(string name,address mineTokenAddress) internal {
-        minePoolInfo.push(MinePoolInfo({
-            mineToken: IMineToken(mineTokenAddress),
-            //TODO need more info
-        }))
+    function addPoolInfo(string memory symbol,address mineTokenAddress) internal {
+        mineTokenMap[symbol]= IMineToken(mineTokenAddress);
     }
 
     ///the owner can withdraw any erc20 token and eth
-    function withdraw(IERC20 token,address to,uint256 amount,uint256 tid) public onlyOwner{
-        address mineToken = minePoolInfo[tid];
-        TransferHelper.safeTransferFrom(token, mineToken, to, amount);
+    function withdraw(address token,address to,uint256 amount,string memory symbol) public onlyOwner{
+        IMineToken mineToken = mineTokenMap[symbol];
+        mineToken.safeTransferFrom(address(mineToken), to, amount);
     }
 
-    ///withdraw eth
-    function withdrawETH(address to,uint256 amount, uint256 tid) public onlyOwner {
-        address mineToken = minePoolInfo[tid];
-        TransferHelper.safeTransferETH(to, amount);
-    }
+    // ///withdraw eth
+    // function withdrawETH(address to,uint256 amount, string memory symbol) public onlyOwner {
+    //     address mineToken = minePoolInfo[symbol];
+    //     TransferHelper.safeTransferETH(to, amount);
+    // }
 
     ///the owner can mint any number tokens at any time!
-    function mint(uint256 tid,uint256 amount) public onlyOwner {
-        IMineToken(minePoolInfo[tid]).mint(msg.sender ,amount)
+    function mint(string memory symbol,uint256 amount) public onlyOwner {
+        IMineToken(mineTokenMap[symbol]).mint(address(this) ,amount);
     }
 
     function addLiquidity() public onlyOwner {
@@ -72,7 +78,7 @@ contract Issuer is IIssuer, Ownable{
 
     }
 
-    function getMineTokenInLiquidityPool(IMineToken mineToken) public view returns(uint256) {
-        
+    function getMineTokenInLiquidityPool(IMineToken mineToken) public override view returns(uint256) {
+        return 0;
     }
 }
