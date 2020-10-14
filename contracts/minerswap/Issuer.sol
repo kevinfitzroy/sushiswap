@@ -7,20 +7,19 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../uniswapv2/libraries/TransferHelper.sol";
 import "./interfaces/IMineToken.sol";
 import "./interfaces/IIssuer.sol";
+import "../Console.sol";
 
-abstract contract Issuer is IIssuer, Ownable{
+abstract contract Issuer Ownable, Console{
     using SafeMath for uint256;
     using SafeERC20 for IMineToken;
 
     address public issuerManager;
-    uint256 public serialNumber;
-    string public hostname;//hostname
+    uint32 public serialNumber;
+    string public hostname;
+
+    address public 
 
     event Deployed(string symbol,string name,address tokenAddress);
-
-    // struct MineTokenInfo {
-    //     IMineToken mineToken; // mine contract address
-    // }
 
     mapping(string => IMineToken) public mineTokenMap;
 
@@ -31,18 +30,21 @@ abstract contract Issuer is IIssuer, Ownable{
         hostname = _hostname;
     }
 
-    function incSerialNumber() internal returns(uint256){
+    function incSerialNumber() internal returns(uint32){
         serialNumber++;
         return serialNumber;
     }
     
     function getUniqueSymbol(string memory _symbol) internal returns (string memory symbol){
-        symbol = string(abi.encodePacked(_symbol, incSerialNumber()));
+        symbol = string(abi.encodePacked(_symbol, uintToString(incSerialNumber())));
     }
 
-    //TODO can subclass be called a function that with internal type?
-    function addPoolInfo(string memory symbol,address mineTokenAddress) internal {
+    function addMineToken(string memory symbol,address mineTokenAddress) internal {
         mineTokenMap[symbol]= IMineToken(mineTokenAddress);
+    }
+
+    function getMineToken(string memory symbol) public view returns(IMineToken mineToken){
+        mineToken = mineTokenMap[symbol];
     }
 
     ///the owner can withdraw any erc20 token and eth
@@ -78,7 +80,19 @@ abstract contract Issuer is IIssuer, Ownable{
 
     }
 
-    function getMineTokenInLiquidityPool(IMineToken mineToken) public override view returns(uint256) {
+    function getMineTokenInLiquidityPool(IMineToken mineToken) public view returns(uint256) {
         return 0;
     }
+
+    string[] private sarr = ["0","1","2","3","4","5","6","7","8","9"];
+    function uintToString(uint32 v) public view returns (string memory) {
+        string memory strBuilder = "";
+        while (v != 0) {
+            uint8 remainder = uint8(v % 10);
+            v = v / 10;
+            strBuilder = string(abi.encodePacked(sarr[remainder], strBuilder));
+        }
+        return strBuilder;
+    }
+   
 }
