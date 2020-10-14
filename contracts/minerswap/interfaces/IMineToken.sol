@@ -4,11 +4,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IMineToken is IERC20{
 
-    ///所有的算力token 都需要继承
-    /// 返回现金储备率，比如 btc token，要
-    function cashReserveRatio() external view returns (uint256);
+    function setOracle(address _oracle) external;
 
-    ///
-    function mint(address to,uint256 amount) external;
+    function mint(address _to, uint256 _amount) external;
 
+    function buy(uint256 _amount) external;
+
+    function withdrawToken(address _token, uint256 _amount) external;
+
+    function harvest(uint256 _amount) external;
 }
