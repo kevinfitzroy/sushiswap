@@ -2,10 +2,10 @@ pragma solidity 0.6.12;
 
 import "../interfaces/IBitcoinOracle.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../../uniswapv2/libraries/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract BitcoinOracle is IBitcoinOracle, Ownable {
-    using SafeMathUniswap for uint256;
+    using SafeMath for uint256;
 
     // Mine reward per Th per second, decimals is 18
     uint public rewardPerTPerSecond;

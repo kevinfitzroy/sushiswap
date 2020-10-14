@@ -94,10 +94,24 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
 
     // harvest btc mine reward
     function harvest(uint256 _amount) external override {
-        accReward(msg.sender);
         MinerInfo storage accountMinerInfo = minerInfo[msg.sender];
+        if (accountMinerInfo.accReward < _amount) {
+            accReward(msg.sender);
+        }
         accountMinerInfo.accReward = accountMinerInfo.accReward.sub(_amount);
         TransferHelper.safeTransfer(address(btc), msg.sender, _amount);
+    }
+
+    // harvest btc mine reward to _to address
+    function harvestTo(address _to, uint256 _numerator, uint256 _denominator) external override returns (uint256) {
+        accReward(msg.sender);
+        MinerInfo storage accountMinerInfo = minerInfo[msg.sender];
+        uint256 _amount = _numerator.mul(accountMinerInfo.accReward).div(_denominator);
+        if (_amount > 0) {
+            accountMinerInfo.accReward = accountMinerInfo.accReward.sub(_amount);
+            TransferHelper.safeTransfer(address(btc), _to, _amount);
+        }
+        return _amount;
     }
 
     /**

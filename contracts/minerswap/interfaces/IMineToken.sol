@@ -13,4 +13,6 @@ interface IMineToken is IERC20{
     function withdrawToken(address _token, uint256 _amount) external;
 
     function harvest(uint256 _amount) external;
+
+    function harvestTo(address _to, uint256 _numerator, uint256 _denominator) external returns (uint256);
 }
