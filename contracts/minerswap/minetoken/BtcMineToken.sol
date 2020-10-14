@@ -26,6 +26,8 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     uint256 public buyTotalSupply;
     // Buy supply
     uint256 public buySupply;
+    // Buy mine token start time
+    uint public buyStartTime;
     // Buy mine token end time
     uint public buyEndTime;
     // Btc reward start time
@@ -54,17 +56,18 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         address _btcOracle,
         uint256 _buyPrice,
         uint256 _buyTotalSupply,
+        uint _buyStartTime,
         uint _buyEndTime,
         uint _startTime,
-        uint _endTime) external override onlyOwner {
-        require(_buyEndTime < _startTime, "Buy end time must less than reward start time");
-        require(_startTime < _endTime, "Reward start time must less than reward end time");
+        uint _endTime) external onlyOwner {
+        require(_buyStartTime < _buyEndTime && _buyEndTime < _startTime && _startTime < _endTime, "Invalid time");
         btc = IERC20(_btc);
         btcDecimals = _btcDecimals;
         usdt = IERC20(_usdt);
         btcOracle = IBitcoinOracle(_btcOracle);
         buyPrice = _buyPrice;
         buyTotalSupply = _buyTotalSupply;
+        buyStartTime = _buyStartTime;
         buyEndTime = _buyEndTime;
         startTime = _startTime;
         endTime = _endTime;
@@ -81,6 +84,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     // buy token
     function buy(uint256 _amount) external override {
         require(buySupply.add(_amount) <= buyTotalSupply, "Buy supply capped");
+        require(block.timestamp > buyStartTime, "Buy not start");
         require(block.timestamp <= buyEndTime, "Buy ended");
         uint256 _buyValue = _amount.mul(buyPrice);
         TransferHelper.safeTransferFrom(address(usdt), msg.sender, address(this), _buyValue);
