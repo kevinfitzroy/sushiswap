@@ -16,14 +16,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     ) public ERC20(_name, _symbol) {
     }
 
-     ///所有的算力token 都需要继承
-    /// 返回现金储备率，比如 btc token，要
-    function cashReserveRatio() external override view returns (uint256){
-        return 502;
-    }
-
-    ///
-    function mint(address to,uint256 amount) public override{
+    function mint(address to,uint256 amount) public override onlyOwner{
          _mint(to, amount);
     }
 
