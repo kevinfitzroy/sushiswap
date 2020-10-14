@@ -56,7 +56,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         uint256 _buyTotalSupply,
         uint _buyEndTime,
         uint _startTime,
-        uint _endTime) external {
+        uint _endTime) external override onlyOwner {
         require(_buyEndTime < _startTime, "Buy end time must less than reward start time");
         require(_startTime < _endTime, "Reward start time must less than reward end time");
         btc = IERC20(_btc);
@@ -82,7 +82,8 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     function buy(uint256 _amount) external override {
         require(buySupply.add(_amount) <= buyTotalSupply, "Buy supply capped");
         require(block.timestamp <= buyEndTime, "Buy ended");
-        TransferHelper.safeTransferFrom(address(usdt), msg.sender, address(this), _amount);
+        uint256 _buyValue = _amount.mul(buyPrice);
+        TransferHelper.safeTransferFrom(address(usdt), msg.sender, address(this), _buyValue);
         buySupply = buySupply.add(_amount);
         _mint(msg.sender, _amount);
     }
