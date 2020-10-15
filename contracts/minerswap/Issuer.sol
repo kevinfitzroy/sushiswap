@@ -6,9 +6,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../uniswapv2/libraries/TransferHelper.sol";
 import "./interfaces/IMineToken.sol";
-import "../Console.sol";
 
-abstract contract Issuer is Ownable, Console{
+abstract contract Issuer is Ownable{
     using SafeMath for uint256;
     using SafeERC20 for IMineToken;
 
