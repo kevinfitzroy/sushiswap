@@ -6,18 +6,15 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../uniswapv2/libraries/TransferHelper.sol";
 import "./interfaces/IMineToken.sol";
-import "./interfaces/IIssuer.sol";
 import "../Console.sol";
 
-abstract contract Issuer Ownable, Console{
+abstract contract Issuer is Ownable, Console{
     using SafeMath for uint256;
     using SafeERC20 for IMineToken;
 
     address public issuerManager;
     uint32 public serialNumber;
     string public hostname;
-
-    address public 
 
     event Deployed(string symbol,string name,address tokenAddress);
 
