@@ -17,8 +17,8 @@ contract IssuerBTC is Issuer {
     }
 
     function issue(
-        string memory btc, 
-        uint8 btcDecimals, 
+        string memory btc,
+        uint8 btcDecimals,
         address currency,
         address btcOracle,
         uint256 buyPrice,

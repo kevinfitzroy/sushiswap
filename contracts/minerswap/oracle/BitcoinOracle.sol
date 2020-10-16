@@ -14,7 +14,7 @@ contract BitcoinOracle is IBitcoinOracle, Ownable {
         rewardPerTPerSecond = _rewardPerTPerSecond;
     }
 
-    function calReward(uint256 h, uint startTime, uint endTime, uint8 decimals) public view override returns (uint256) {
+    function calReward(uint256 h, uint startTime, uint endTime, uint8 decimals) external view override returns (uint256) {
         require(decimals <= 18, "decimals overflow");
         return rewardPerTPerSecond.mul(h).mul(endTime.sub(startTime)).div(10**(18-decimals));
     }
