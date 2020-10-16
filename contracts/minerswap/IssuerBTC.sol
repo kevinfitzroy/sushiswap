@@ -10,15 +10,15 @@ contract IssuerBTC is Issuer {
     BTCConfig public btcConfig;
 
     constructor(
-        string memory hostname
+        string memory hostname,
         BTCConfig _btcConfig
     ) public Issuer(hostname){
         btcConfig = _btcConfig;
     }
 
     function issue(
-        string memory btc, 
-        uint8 btcDecimals, 
+        string memory btc,
+        uint8 btcDecimals,
         address currency,
         address btcOracle,
         uint256 buyPrice,
