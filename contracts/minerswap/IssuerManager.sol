@@ -14,12 +14,13 @@ contract IssuerManagerV1 is Ownable {
 
     IManagerMigrator public migrator;
     address public btcConfig;
+    address public mineTokenManager;
 
     mapping(string => address) issuerInfo;
 
     event DeployedIssuer(string hostname, address issuerAddress);
 
-    constructor() public {
+    constructor(address _mineTokenManager) public {
         bytes memory bytecode = type(BTCConfig).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(block.timestamp));
         address btcConfigAddr;
@@ -27,6 +28,7 @@ contract IssuerManagerV1 is Ownable {
             btcConfigAddr := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
         btcConfig = btcConfigAddr;
+        mineTokenManager = _mineTokenManager;
     }
 
     function setMigrator(IManagerMigrator _migrator) public onlyOwner {
@@ -55,7 +57,7 @@ contract IssuerManagerV1 is Ownable {
         require(issuerInfo[hostname] == address(0) ,"IssuerManager: hostname already exist!");
 
         bytes memory bytecode = type(IssuerBTC).creationCode;
-        bytecode = abi.encodePacked(bytecode, abi.encode(hostname, btcConfig));//TODO BTCConfig type or Address
+        bytecode = abi.encodePacked(bytecode, abi.encode(hostname, btcConfig, mineTokenManager));
         bytes32 salt = keccak256(abi.encodePacked(hostname, block.timestamp));
         assembly {
             issuerAddress := create2(0, add(bytecode, 32), mload(bytecode), salt)
@@ -70,5 +72,4 @@ contract IssuerManagerV1 is Ownable {
     function getIssuerAddress(string memory hostname) public view returns(address issuerAddress){
         issuerAddress = issuerInfo[hostname];
     }
-
 }

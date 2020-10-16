@@ -1,17 +1,16 @@
 const { expectRevert } = require('@openzeppelin/test-helpers');
 const IssuerManager = artifacts.require('IssuerManagerV1');
 const IssuerBTC = artifacts.require('IssuerBTC');
-const Issuer = artifacts.require('Issuer');
 const BtcMineToken = artifacts.require('BtcMineToken');
 const MockERC20 = artifacts.require('MockERC20');
 const BitcoinOracle = artifacts.require('BitcoinOracle');
+const MineTokenManager = artifacts.require('MineTokenManager');
 
 const hostname = "minerswap.com";
-const zero_address = "0x0000000000000000000000000000000000000000";
 contract('Issuer and IssuerBTC', async ([boss, anyone, alice, bob]) => {
     beforeEach(async () => {
         this.mbtc = await MockERC20.new("mbtc", "mbtc", {from: anyone});
-        this.issuerManager = await IssuerManager.new({from: alice});
+        this.issuerManager = await IssuerManager.new((await MineTokenManager.new({from: alice})).address, {from: alice});
         await this.issuerManager.updateBtcConfig('mbtc', this.mbtc.address, {from: alice});
 
         this.currencyToken = await MockERC20.new("usd", "usd", {from: anyone});
@@ -31,7 +30,7 @@ contract('Issuer and IssuerBTC', async ([boss, anyone, alice, bob]) => {
             5,
             6,
             {from: boss}
-        )).logs[1].args.tokenAddress);
+        )).logs[2].args.tokenAddress);
     });
 
     it('should deployed successfully', async () => {

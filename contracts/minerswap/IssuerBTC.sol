@@ -4,6 +4,9 @@ import "./Issuer.sol";
 import "./minetoken/BtcMineToken.sol";
 import "./config/BTCConfig.sol";
 
+interface IMineTokenManager{
+    function deployBtcMineToken(string memory name, string memory symbol) external returns(address);
+}
 contract IssuerBTC is Issuer {
     string public constant NAME = "MineTokenBTC";
     string public constant SYMBOL = "mtBTC";
@@ -11,8 +14,9 @@ contract IssuerBTC is Issuer {
 
     constructor(
         string memory hostname,
-        BTCConfig _btcConfig
-    ) public Issuer(hostname){
+        BTCConfig _btcConfig,
+        address mineTokenManager
+    ) public Issuer(hostname, mineTokenManager){
         btcConfig = _btcConfig;
     }
 
@@ -30,22 +34,9 @@ contract IssuerBTC is Issuer {
         uint256 endTime
     ) public onlyOwner returns (address mineTokenAddress){
         require(btcConfig.index(btc) != address(0), "BTCConfig: wrapper btc name does not exist!");
-        mineTokenAddress = deployMineToken();
-        BtcMineToken mineToken = BtcMineToken(mineTokenAddress);
-        address btcConfigAddress = btcConfig.index(btc);
-        mineToken.initialize(btcConfigAddress, btcDecimals, currency, btcOracle, buyPrice, buyTotalSupply, buyStartTime, buyEndTime, startTime, endTime);
-        mineToken.mint(address(this), preMintNumber);
-    }
-
-    function deployMineToken() internal returns(address mineTokenAddress){
-        string memory symbol = getUniqueSymbol(SYMBOL);
-        bytes memory bytecode = type(BtcMineToken).creationCode;
-        bytecode = abi.encodePacked(bytecode, abi.encode(NAME, symbol));
-        bytes32 salt = keccak256(abi.encodePacked(symbol, address(this)));
-        assembly {
-            mineTokenAddress := create2(0, add(bytecode, 32), mload(bytecode), salt)
-        }
-        addMineToken(symbol, mineTokenAddress);
-        emit Deployed(symbol, NAME, mineTokenAddress);
+        mineTokenAddress = IMineTokenManager(mineTokenManager).deployBtcMineToken(NAME, getUniqueSymbol(SYMBOL));
+        BtcMineToken(mineTokenAddress).initialize(btcConfig.index(btc), btcDecimals, currency, btcOracle, buyPrice, buyTotalSupply, buyStartTime, buyEndTime, startTime, endTime);
+        BtcMineToken(mineTokenAddress).mint(address(this), preMintNumber);
+        addMineToken(mineTokenAddress);
     }
 }

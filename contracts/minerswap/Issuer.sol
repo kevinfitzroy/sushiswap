@@ -1,6 +1,7 @@
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -14,16 +15,18 @@ abstract contract Issuer is Ownable{
     address public issuerManager;
     uint32 public serialNumber;
     string public hostname;
-
-    event Deployed(string symbol,string name,address tokenAddress);
+    address public mineTokenManager;
 
     mapping(string => IMineToken) public mineTokenMap;
+    event Deployed(string symbol,string name,address tokenAddress);
 
     constructor(
-        string memory _hostname
+        string memory _hostname,
+        address _mineTokenManager
     ) public {
         issuerManager = msg.sender;
         hostname = _hostname;
+        mineTokenManager = _mineTokenManager;
     }
 
     function incSerialNumber() internal returns(uint32){
@@ -35,8 +38,10 @@ abstract contract Issuer is Ownable{
         symbol = string(abi.encodePacked(_symbol, uintToString(incSerialNumber())));
     }
 
-    function addMineToken(string memory symbol,address mineTokenAddress) internal {
-        mineTokenMap[symbol]= IMineToken(mineTokenAddress);
+    function addMineToken(address mineTokenAddress) internal {
+        ERC20 mineTokenErc = ERC20(mineTokenAddress);
+        mineTokenMap[mineTokenErc.symbol()]= IMineToken(mineTokenAddress);
+        emit Deployed(mineTokenErc.symbol(), mineTokenErc.name(), mineTokenAddress);
     }
 
     function getMineToken(string memory symbol) public view returns(IMineToken mineToken){

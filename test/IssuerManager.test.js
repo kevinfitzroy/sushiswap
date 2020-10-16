@@ -2,12 +2,13 @@ const { expectRevert } = require('@openzeppelin/test-helpers');
 const IssuerManager = artifacts.require('IssuerManagerV1');
 const IssuerBTC = artifacts.require('IssuerBTC');
 const MockMigrator = artifacts.require('MockMigrator');
+const MineTokenManager = artifacts.require('MineTokenManager');
 
 const hostname = "minerswap.com";
 const zero_address = "0x0000000000000000000000000000000000000000";
 contract('IssuerManager', async ([boss, anyone, alice, bob]) => {
     beforeEach(async () => {
-        this.issuerManager = await IssuerManager.new({ from: boss});
+        this.issuerManager = await IssuerManager.new((await MineTokenManager.new({from:boss})).address, {from: boss});
         this.issuerBtc = await IssuerBTC.at((await this.issuerManager.registIssuerBTC(hostname, {from: alice})).logs[2].args.issuerAddress);
     });
 
