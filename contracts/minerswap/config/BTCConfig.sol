@@ -7,9 +7,9 @@ contract BTCConfig is Ownable{
     mapping(string => address) public btcAddress;
 
     constructor() public {
-        btcAddress["wBTC"] = address(0x2260fac5e5542a773aa44fbcfedf7c193bc2c599));
-        btcAddress["hBTC"] = address(0x0316EB71485b0Ab14103307bf65a021042c6d380);
-        btcAddress["sBTC"] = address(0xfe18be6b3bd88a2d2a7f928d00292e7a9963cfc6);
+        btcAddress["wBTC"] = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+        btcAddress["hBTC"] = 0x0316EB71485b0Ab14103307bf65a021042c6d380;
+        btcAddress["sBTC"] = 0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6;
     }
 
     function update(string memory name, address addr) public onlyOwner{
