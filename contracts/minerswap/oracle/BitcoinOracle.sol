@@ -22,17 +22,16 @@ contract BitcoinOracle is IBitcoinOracle, Ownable {
         blockInfos.push(BlockInfo({timestamp:_timestamp, rewardPerTPerSecond:_rewardPerTPerSecond}));
     }
 
-    function calReward(uint256 h, uint startTime, uint endTime, uint8 decimals) external view override returns (uint256) {
+    function calReward(uint256 h, uint startTime, uint endTime, uint8 decimals) external override view returns (uint256) {
         require(decimals <= 18, "decimals overflow");
-        int endIndex = findIndex(endTime);
-        if (endIndex == -1) {
+        (bool success, uint endIndex) = findIndex(endTime);
+        if (!success) {
             return 0;
         }
         uint reward = 0;
         while(endIndex >= 0) {
             uint _timestamp = blockInfos[endIndex].timestamp;
             uint _rewardPerTPerSecond = blockInfos[endIndex].rewardPerTPerSecond;
-            uint reward;
             if (startTime > _timestamp) {
                 reward = reward.add(_rewardPerTPerSecond.mul(endTime.sub(startTime)));
                 break;
@@ -45,35 +44,37 @@ contract BitcoinOracle is IBitcoinOracle, Ownable {
         if (reward == 0) {
             return 0;
         }
-        return reward.mul(h).div(10**(18-decimals));
+        return reward.mul(h).div(10**(18-uint(decimals)));
     }
 
-    function findIndex(uint time) internal returns (int) {
+    function findIndex(uint time) internal view returns (bool, uint) {
         if (blockInfos.length == 0) {
-            return -1;
+            return (false, 0);
         }
         uint latestBlockTime = blockInfos[blockInfos.length - 1].timestamp;
         if (time > latestBlockTime) {
-            return blockInfos.length - 1;
+            return (true, blockInfos.length - 1);
         } else {
             uint indexDiff = (latestBlockTime - time)/DIFF_ADJUST_PERIOD; // overflow will not happen
-            int index = blockInfos.length - indexDiff - 2;
-            index = index < 0 ? 0 : index;
+            uint index = 0;
+            if (blockInfos.length > indexDiff.add(2)) {
+                index = blockInfos.length - indexDiff - 2;
+            }
             uint blockTime = blockInfos[index].timestamp;
             if (time < blockTime) {
-                for (int i = index - 1; i >= 0; i--) {
+                for (uint i = index - 1; i >= 0; i--) {
                     if (time > blockInfos[i].timestamp) {
-                        return i;
+                        return (true, i);
                     }
                 }
             } else {
-                for (int i = index + 1; i < blockInfos.length - 1; i++) {
+                for (uint i = index + 1; i < blockInfos.length - 1; i++) {
                     if (time <= blockInfos[i].timestamp) {
-                        return i - 1;
+                        return (true, i - 1);
                     }
                 }
             }
         }
-        return -1;
+        return (false, 0);
     }
 }
