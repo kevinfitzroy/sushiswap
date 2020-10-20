@@ -7,6 +7,9 @@ import "./config/BTCConfig.sol";
 interface IMineTokenManager{
     function deployBtcMineToken(string memory name, string memory symbol) external returns(address);
 }
+interface IIssuerManager{
+    function getBitcoinOracle() external view returns(address);
+}
 contract IssuerBTC is Issuer {
     string public constant NAME = "MineTokenBTC";
     string public constant SYMBOL = "mtBTC";
@@ -22,20 +25,19 @@ contract IssuerBTC is Issuer {
 
     function issue(
         string memory btc,
-        uint8 btcDecimals,
         address currency,
-        address btcOracle,
         uint256 buyPrice,
         uint256 buyTotalSupply,
         uint256 preMintNumber,
         uint256 buyStartTime,
         uint256 buyEndTime,
         uint256 startTime,
-        uint256 endTime
+        uint256 endTime,
+        string memory comment
     ) public onlyOwner returns (address mineTokenAddress){
-        require(btcConfig.index(btc) != address(0), "BTCConfig: wrapper btc name does not exist!");
+        require(btcConfig.indexAddr(btc) != address(0), "BTCConfig: wrapper btc name does not exist!");
         mineTokenAddress = IMineTokenManager(mineTokenManager).deployBtcMineToken(NAME, getUniqueSymbol(SYMBOL));
-        BtcMineToken(mineTokenAddress).initialize(btcConfig.index(btc), btcDecimals, currency, btcOracle, buyPrice, buyTotalSupply, buyStartTime, buyEndTime, startTime, endTime);
+        BtcMineToken(mineTokenAddress).initialize(btcConfig.indexAddr(btc), btcConfig.indexDecimal(btc), currency, IIssuerManager(issuerManager).getBitcoinOracle(), buyPrice, buyTotalSupply, buyStartTime, buyEndTime, startTime, endTime,comment);
         BtcMineToken(mineTokenAddress).mint(address(this), preMintNumber);
         addMineToken(mineTokenAddress);
     }

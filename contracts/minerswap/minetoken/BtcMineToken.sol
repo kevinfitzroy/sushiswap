@@ -35,6 +35,8 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     // Btc reward end time
     uint public endTime;
 
+    string public comment; 
+
     struct MinerInfo {
         uint nextRewardTime; // Next cal reward time
         uint256 accReward; // Total reward not withdraw
@@ -59,8 +61,11 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         uint _buyStartTime,
         uint _buyEndTime,
         uint _startTime,
-        uint _endTime) external onlyOwner {
+        uint _endTime,
+        string memory _comment
+    ) external onlyOwner {
         require(_buyStartTime < _buyEndTime && _buyEndTime < _startTime && _startTime < _endTime, "Invalid time");
+        require(bytes(_comment).length < 1024, "BtcMineToken: comment is too long!");
         btc = IERC20(_btc);
         btcDecimals = _btcDecimals;
         usdt = IERC20(_usdt);
@@ -71,6 +76,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         buyEndTime = _buyEndTime;
         startTime = _startTime;
         endTime = _endTime;
+        comment = _comment;
     }
 
     function setOracle(address _oracle) external override onlyOwner {

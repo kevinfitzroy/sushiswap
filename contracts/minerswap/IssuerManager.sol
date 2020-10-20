@@ -15,12 +15,13 @@ contract IssuerManagerV1 is Ownable {
     IManagerMigrator public migrator;
     address public btcConfig;
     address public mineTokenManager;
+    address public bitcoinOracle;
 
     mapping(string => address) issuerInfo;
 
     event DeployedIssuer(string hostname, address issuerAddress);
 
-    constructor(address _mineTokenManager) public {
+    constructor(address _mineTokenManager, address _bitcoinOracle) public {
         bytes memory bytecode = type(BTCConfig).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(block.timestamp));
         address btcConfigAddr;
@@ -29,13 +30,22 @@ contract IssuerManagerV1 is Ownable {
         }
         btcConfig = btcConfigAddr;
         mineTokenManager = _mineTokenManager;
+        bitcoinOracle = _bitcoinOracle;
     }
 
-    function setMigrator(IManagerMigrator _migrator) public onlyOwner {
+    function setBitcoinOracle(address _bitcoinOracle) external onlyOwner {
+        bitcoinOracle = _bitcoinOracle;
+    }
+
+    function getBitcoinOracle() external view returns(address) {
+        return bitcoinOracle;
+    }
+
+    function setMigrator(IManagerMigrator _migrator) external onlyOwner {
         migrator = _migrator;
     }
     
-    function migrate() public {
+    function migrate() external {
         require(address(migrator) != address(0), "migrate: no migrator");
         //TODO migrate issuer info to new manager
     }
@@ -49,8 +59,8 @@ contract IssuerManagerV1 is Ownable {
         issuerInfo[hostname] = issuerAddress;
     }
 
-    function updateBtcConfig(string memory name, address addr) public onlyOwner{
-        BTCConfig(btcConfig).update(name, addr);
+    function updateBtcConfig(string memory name, address addr, uint8 decimal) public onlyOwner{
+        BTCConfig(btcConfig).update(name, addr, decimal);
     }
 
     function registIssuerBTC(string memory hostname) external returns (address issuerAddress) {
