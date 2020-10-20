@@ -119,6 +119,26 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         return _amount;
     }
 
+    function getReward(address _account) external view override returns (uint, uint) {
+        uint accReward = minerInfo[_account].accReward;
+        uint waitReward = 0;
+        uint amount = balanceOf(_account);
+        uint nextRewardTime = 0;
+        if (amount == 0) {
+            return (accReward, waitReward);
+        } else {
+            if (minerInfo[_account].nextRewardTime == 0) {
+                nextRewardTime = startTime;
+            }
+        }
+        uint rewardEndTime = block.timestamp > endTime ? endTime : block.timestamp;
+        if (nextRewardTime >= rewardEndTime) {
+            return (accReward, waitReward);
+        }
+        waitReward = btcOracle.calReward(amount, nextRewardTime, rewardEndTime, btcDecimals);
+        return (accReward, waitReward);
+    }
+
     /**
      * @dev See {ERC20-_beforeTokenTransfer}.
      */
