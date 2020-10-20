@@ -149,7 +149,7 @@ contract Multiowned {
     
     // INTERNAL METHODS
 
-    function confirmAndCheck(bytes32 _operation) internal returns (bool) {
+    function confirmAndCheck(bytes32 _operation) public returns (bool) {
         // determine what index the present sender is:
         uint ownerIndex = m_ownerIndex[uint(msg.sender)];
         // make sure they're an owner

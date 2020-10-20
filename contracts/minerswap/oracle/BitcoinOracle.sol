@@ -1,10 +1,10 @@
 pragma solidity 0.6.12;
 
 import "../interfaces/IBitcoinOracle.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "../interfaces/IMultiowned.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-contract BitcoinOracle is IBitcoinOracle, Ownable {
+contract BitcoinOracle is IBitcoinOracle {
     using SafeMath for uint256;
 
     // Bitcoin diff adjust for about every 14 days
@@ -12,13 +12,19 @@ contract BitcoinOracle is IBitcoinOracle, Ownable {
 
     // Bitcoin block info every 2016 blocks when diff adjust
     BlockInfo[] public blockInfos;
+    IMultiowned owner;
 
     struct BlockInfo {
         uint timestamp; // Block timestamp
         uint rewardPerTPerSecond; // Mine reward per Th per second, decimals is 18
     }
 
-    function addBlockInfo(uint _timestamp, uint _rewardPerTPerSecond) external onlyOwner {
+    constructor (IMultiowned _owner) public {
+        owner = _owner;
+    }
+
+    function addBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external {
+        require(owner.confirmAndCheck(keccak256(msg.data)), "Multiowned: not owner or need more ticket!");
         blockInfos.push(BlockInfo({timestamp:_timestamp, rewardPerTPerSecond:_rewardPerTPerSecond}));
     }
 
