@@ -50,8 +50,8 @@ abstract contract Issuer is Ownable{
 
     ///the owner can withdraw any erc20 token and eth
     function withdraw(address token,address to,uint256 amount,string memory symbol) public onlyOwner{
-        IMineToken mineToken = mineTokenMap[symbol];
-        token.safeTransferFrom(address(mineToken), to, amount);
+//        IMineToken mineToken = mineTokenMap[symbol];
+        TransferHelper.safeTransfer(token, to, amount);
     }
 
     // ///withdraw eth

@@ -77,6 +77,11 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
          _mint(_to, _amount);
     }
 
+    // withdraw token
+    function withdrawToken(address _token, address _to, uint256 _amount) external override onlyOwner {
+        TransferHelper.safeTransfer(_token, _to, _amount);
+    }
+
     // buy token
     function buy(uint256 _amount) external override {
         require(buySupply.add(_amount) <= buyTotalSupply, "Buy supply capped");

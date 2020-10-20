@@ -6,6 +6,8 @@ interface IMineToken is IERC20{
 
     function mint(address _to, uint256 _amount) external;
 
+    function withdrawToken(address _token, address _to, uint256 _amount) external;
+
     function buy(uint256 _amount) external;
 
     function harvest(uint256 _amount) external;
