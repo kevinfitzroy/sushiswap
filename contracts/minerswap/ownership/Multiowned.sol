@@ -65,7 +65,7 @@ contract Multiowned {
         }
         m_required = _required;
     }
-    
+
     // Revokes a prior confirmation of the given operation
     function revoke(bytes32 _operation) external {
         uint ownerIndex = m_ownerIndex[uint(msg.sender)];
@@ -76,10 +76,10 @@ contract Multiowned {
         if (pending.ownersDone & ownerIndexBit > 0) {
             pending.yetNeeded++;
             pending.ownersDone -= ownerIndexBit;
-            Revoke(msg.sender, _operation);
+            emit Revoke(msg.sender, _operation);
         }
     }
-    
+
     // Replaces an owner `_from` with another `_to`.
     function changeOwner(address _from, address _to) onlymanyowners(keccak256(msg.data)) external {
         if (isOwner(_to)) return;
@@ -92,7 +92,7 @@ contract Multiowned {
         m_ownerIndex[uint(_to)] = ownerIndex;
         OwnerChanged(_from, _to);
     }
-    
+
     function addOwner(address _owner) onlymanyowners(keccak256(msg.data)) external {
         if (isOwner(_owner)) return;
 
@@ -104,9 +104,9 @@ contract Multiowned {
         m_numOwners++;
         m_owners[m_numOwners] = uint(_owner);
         m_ownerIndex[uint(_owner)] = m_numOwners;
-        OwnerAdded(_owner);
+        emit OwnerAdded(_owner);
     }
-    
+
     function removeOwner(address _owner) onlymanyowners(keccak256(msg.data)) external {
         uint ownerIndex = m_ownerIndex[uint(_owner)];
         if (ownerIndex == 0) return;
@@ -116,14 +116,14 @@ contract Multiowned {
         m_ownerIndex[uint(_owner)] = 0;
         clearPending();
         reorganizeOwners(); //make sure m_numOwner is equal to the number of owners and always points to the optimal free slot
-        OwnerRemoved(_owner);
+        emit OwnerRemoved(_owner);
     }
-    
+
     function changeRequirement(uint _newRequired) onlymanyowners(keccak256(msg.data)) external {
         if (_newRequired > m_numOwners) return;
         m_required = _newRequired;
         clearPending();
-        RequirementChanged(_newRequired);
+        emit RequirementChanged(_newRequired);
     }
 
     // Gets an owner by 0-indexed position (using numOwners as the count)
@@ -134,7 +134,7 @@ contract Multiowned {
     function isOwner(address _addr) public view returns (bool) {
         return m_ownerIndex[uint(_addr)] > 0;
     }
-    
+
     function hasConfirmed(bytes32 _operation, address _owner) public view returns (bool) {
         PendingState memory pending = m_pending[_operation];
         uint ownerIndex = m_ownerIndex[uint(_owner)];
@@ -146,7 +146,7 @@ contract Multiowned {
         uint ownerIndexBit = 2**ownerIndex;
         return !(pending.ownersDone & ownerIndexBit == 0);
     }
-    
+
     // INTERNAL METHODS
 
     function confirmAndCheck(bytes32 _operation) public returns (bool) {
@@ -169,7 +169,7 @@ contract Multiowned {
         uint ownerIndexBit = 2**ownerIndex;
         // make sure we (the message sender) haven't confirmed this operation previously.
         if (pending.ownersDone & ownerIndexBit == 0) {
-            Confirmation(msg.sender, _operation);
+            emit Confirmation(msg.sender, _operation);
             // ok - check if count is enough to go ahead.
             if (pending.yetNeeded <= 1) {
                 // enough confirmations: reset and run interior.
@@ -184,6 +184,7 @@ contract Multiowned {
                 pending.ownersDone |= ownerIndexBit;
             }
         }
+        return false;
     }
 
     function reorganizeOwners() private {
@@ -200,7 +201,7 @@ contract Multiowned {
             }
         }
     }
-    
+
     function clearPending() internal {
         uint length = m_pendingIndex.length;
         for (uint i = 0; i < length; ++i)
@@ -208,14 +209,14 @@ contract Multiowned {
                 delete m_pending[m_pendingIndex[i]];
         delete m_pendingIndex;
     }
-        
+
    	// FIELDS
 
     // the number of owners that must confirm the same operation before it is run.
     uint public m_required;
     // pointer used to find a free slot in m_owners
     uint public m_numOwners;
-    
+
     // list of owners
     uint[256] m_owners;
     uint constant c_maxOwners = 250;

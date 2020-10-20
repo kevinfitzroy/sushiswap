@@ -33,7 +33,7 @@ abstract contract Issuer is Ownable{
         serialNumber++;
         return serialNumber;
     }
-    
+
     function getUniqueSymbol(string memory _symbol) internal returns (string memory symbol){
         symbol = string(abi.encodePacked(_symbol, uintToString(incSerialNumber())));
     }
@@ -50,8 +50,8 @@ abstract contract Issuer is Ownable{
 
     ///the owner can withdraw any erc20 token and eth
     function withdraw(address token,address to,uint256 amount,string memory symbol) public onlyOwner{
-        IMineToken mineToken = mineTokenMap[symbol];
-        mineToken.safeTransferFrom(address(mineToken), to, amount);
+//        IMineToken mineToken = mineTokenMap[symbol];
+        TransferHelper.safeTransfer(token, to, amount);
     }
 
     // ///withdraw eth
@@ -81,10 +81,6 @@ abstract contract Issuer is Ownable{
 
     }
 
-    function getMineTokenInLiquidityPool(IMineToken mineToken) public view returns(uint256) {
-        return 0;
-    }
-
     string[] private sarr = ["0","1","2","3","4","5","6","7","8","9"];
     function uintToString(uint32 v) public view returns (string memory) {
         string memory strBuilder = "";
@@ -95,5 +91,5 @@ abstract contract Issuer is Ownable{
         }
         return strBuilder;
     }
-   
+
 }

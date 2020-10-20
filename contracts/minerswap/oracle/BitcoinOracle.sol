@@ -35,7 +35,7 @@ contract BitcoinOracle is IBitcoinOracle {
             return 0;
         }
         uint reward = 0;
-        while(endIndex >= 0) {
+        while(true) {
             uint _timestamp = blockInfos[endIndex].timestamp;
             uint _rewardPerTPerSecond = blockInfos[endIndex].rewardPerTPerSecond;
             if (startTime > _timestamp) {
@@ -44,13 +44,14 @@ contract BitcoinOracle is IBitcoinOracle {
             } else {
                 reward = reward.add(_rewardPerTPerSecond.mul(endTime.sub(_timestamp)));
                 endTime = _timestamp;
-                endIndex--;
+                if (endIndex == 0) {
+                    break;
+                } else {
+                    endIndex--;
+                }
             }
         }
-        if (reward == 0) {
-            return 0;
-        }
-        return reward.mul(h).div(10**(18-uint(decimals)));
+        return reward == 0 ? 0 : reward.mul(h).div(10**(18-uint(decimals)));
     }
 
     function findIndex(uint time) internal view returns (bool, uint) {
@@ -68,9 +69,9 @@ contract BitcoinOracle is IBitcoinOracle {
             }
             uint blockTime = blockInfos[index].timestamp;
             if (time < blockTime) {
-                for (uint i = index - 1; i >= 0; i--) {
-                    if (time > blockInfos[i].timestamp) {
-                        return (true, i);
+                for (uint i = index; i > 0; i--) {
+                    if (time > blockInfos[i - 1].timestamp) {
+                        return (true, i - 1); // overflow will not happen
                     }
                 }
             } else {

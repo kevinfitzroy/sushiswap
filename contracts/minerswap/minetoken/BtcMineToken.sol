@@ -79,12 +79,13 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         comment = _comment;
     }
 
-    function setOracle(address _oracle) external override onlyOwner {
-        btcOracle = IBitcoinOracle(_oracle);
-    }
-
     function mint(address _to, uint256 _amount) external override onlyOwner {
          _mint(_to, _amount);
+    }
+
+    // withdraw token
+    function withdrawToken(address _token, address _to, uint256 _amount) external override onlyOwner {
+        TransferHelper.safeTransfer(_token, _to, _amount);
     }
 
     // buy token
@@ -96,11 +97,6 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         TransferHelper.safeTransferFrom(address(usdt), msg.sender, address(this), _buyValue);
         buySupply = buySupply.add(_amount);
         _mint(msg.sender, _amount);
-    }
-
-    // withdraw token
-    function withdrawToken(address _token, uint256 _amount) external override onlyOwner {
-        TransferHelper.safeTransfer(_token, msg.sender, _amount);
     }
 
     // harvest btc mine reward
