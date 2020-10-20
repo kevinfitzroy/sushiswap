@@ -9,9 +9,9 @@
 // some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
 // interior is executed.
 
-pragma solidity ^0.4.10;
+pragma solidity 0.6.12;
 
-contract multiowned {
+contract Multiowned {
 
 	// TYPES
 
@@ -54,7 +54,7 @@ contract multiowned {
 
     // constructor is given number of sigs required to do protected "onlymanyowners" transactions
     // as well as the selection of addresses capable of confirming them.
-    function multiowned(address[] _owners, uint _required) {
+    constructor (address[] memory _owners, uint _required) public {
         m_numOwners = _owners.length + 1;
         m_owners[1] = uint(msg.sender);
         m_ownerIndex[uint(msg.sender)] = 1;
@@ -72,7 +72,7 @@ contract multiowned {
         // make sure they're an owner
         if (ownerIndex == 0) return;
         uint ownerIndexBit = 2**ownerIndex;
-        var pending = m_pending[_operation];
+        PendingState memory pending = m_pending[_operation];
         if (pending.ownersDone & ownerIndexBit > 0) {
             pending.yetNeeded++;
             pending.ownersDone -= ownerIndexBit;
@@ -81,7 +81,7 @@ contract multiowned {
     }
     
     // Replaces an owner `_from` with another `_to`.
-    function changeOwner(address _from, address _to) onlymanyowners(sha3(msg.data)) external {
+    function changeOwner(address _from, address _to) onlymanyowners(keccak256(msg.data)) external {
         if (isOwner(_to)) return;
         uint ownerIndex = m_ownerIndex[uint(_from)];
         if (ownerIndex == 0) return;
@@ -93,7 +93,7 @@ contract multiowned {
         OwnerChanged(_from, _to);
     }
     
-    function addOwner(address _owner) onlymanyowners(sha3(msg.data)) external {
+    function addOwner(address _owner) onlymanyowners(keccak256(msg.data)) external {
         if (isOwner(_owner)) return;
 
         clearPending();
@@ -107,7 +107,7 @@ contract multiowned {
         OwnerAdded(_owner);
     }
     
-    function removeOwner(address _owner) onlymanyowners(sha3(msg.data)) external {
+    function removeOwner(address _owner) onlymanyowners(keccak256(msg.data)) external {
         uint ownerIndex = m_ownerIndex[uint(_owner)];
         if (ownerIndex == 0) return;
         if (m_required > m_numOwners - 1) return;
@@ -119,7 +119,7 @@ contract multiowned {
         OwnerRemoved(_owner);
     }
     
-    function changeRequirement(uint _newRequired) onlymanyowners(sha3(msg.data)) external {
+    function changeRequirement(uint _newRequired) onlymanyowners(keccak256(msg.data)) external {
         if (_newRequired > m_numOwners) return;
         m_required = _newRequired;
         clearPending();
@@ -127,16 +127,16 @@ contract multiowned {
     }
 
     // Gets an owner by 0-indexed position (using numOwners as the count)
-    function getOwner(uint ownerIndex) external constant returns (address) {
+    function getOwner(uint ownerIndex) public view returns (address) {
         return address(m_owners[ownerIndex + 1]);
     }
 
-    function isOwner(address _addr) returns (bool) {
+    function isOwner(address _addr) public view returns (bool) {
         return m_ownerIndex[uint(_addr)] > 0;
     }
     
-    function hasConfirmed(bytes32 _operation, address _owner) constant returns (bool) {
-        var pending = m_pending[_operation];
+    function hasConfirmed(bytes32 _operation, address _owner) public view returns (bool) {
+        PendingState memory pending = m_pending[_operation];
         uint ownerIndex = m_ownerIndex[uint(_owner)];
 
         // make sure they're an owner
@@ -153,16 +153,16 @@ contract multiowned {
         // determine what index the present sender is:
         uint ownerIndex = m_ownerIndex[uint(msg.sender)];
         // make sure they're an owner
-        if (ownerIndex == 0) return;
+        if (ownerIndex == 0) return false;
 
-        var pending = m_pending[_operation];
+        PendingState memory pending = m_pending[_operation];
         // if we're not yet working on this operation, switch over and reset the confirmation status.
         if (pending.yetNeeded == 0) {
             // reset count of confirmations needed.
             pending.yetNeeded = m_required;
             // reset which owners have confirmed (none) - set our bitmap to 0.
             pending.ownersDone = 0;
-            pending.index = m_pendingIndex.length++;
+            pending.index = m_pendingIndex.length + 1;
             m_pendingIndex[pending.index] = _operation;
         }
         // determine the bit to set for this owner.
