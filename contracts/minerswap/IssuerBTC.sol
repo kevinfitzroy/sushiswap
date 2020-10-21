@@ -34,7 +34,7 @@ contract IssuerBTC is Issuer {
         uint256 startTime,
         uint256 endTime,
         string memory comment
-    ) public onlyOwner returns (address payable mineTokenAddress){
+    ) public onlyOwner nonReentrant returns (address payable mineTokenAddress){
         require(btcConfig.indexAddr(btc) != address(0), "BTCConfig: wrapper btc name does not exist!");
         mineTokenAddress = IMineTokenManager(mineTokenManager).deployBtcMineToken(NAME, getUniqueSymbol(SYMBOL));
         BtcMineToken(mineTokenAddress).initialize(btcConfig.indexAddr(btc), btcConfig.indexDecimal(btc), currency, IIssuerManager(issuerManager).getBitcoinOracle(), buyPrice, buyTotalSupply, buyStartTime, buyEndTime, startTime, endTime,comment);

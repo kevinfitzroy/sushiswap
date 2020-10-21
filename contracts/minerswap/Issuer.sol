@@ -5,10 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../uniswapv2/libraries/TransferHelper.sol";
 import "./interfaces/IMineToken.sol";
 
-abstract contract Issuer is Ownable{
+abstract contract Issuer is Ownable, ReentrancyGuard{
     using SafeMath for uint256;
     using SafeERC20 for IMineToken;
 
@@ -51,23 +52,23 @@ abstract contract Issuer is Ownable{
     }
 
     ///the owner can withdraw any erc20 token from himself
-    function withdraw(address token, address to, uint256 amount) external onlyOwner{
+    function withdraw(address token, address to, uint256 amount) external onlyOwner nonReentrant{
         TransferHelper.safeTransfer(token, to, amount);
     }
 
     ///withdraw eth from this contract 
-    function withdrawETH(address to, uint256 amount) external onlyOwner {
+    function withdrawETH(address to, uint256 amount) external onlyOwner nonReentrant{
         TransferHelper.safeTransferETH(to, amount);
     }
 
     ///withdraw token from minetoken through symbol
-    function withdrawFromMineToken(address token, string memory symbol, address to, uint256 amount) external onlyOwner{
+    function withdrawFromMineToken(address token, string memory symbol, address to, uint256 amount) external onlyOwner nonReentrant{
         IMineToken mineToken = mineTokenMap[symbol];
         mineToken.withdrawToken(token, to, amount);
     }
 
     ///withdraw eth from minetoken through symbol
-    function withdrawETHFromMineToken(string memory symbol, address to, uint256 amount) external onlyOwner{
+    function withdrawETHFromMineToken(string memory symbol, address to, uint256 amount) external onlyOwner nonReentrant{
         IMineToken mineToken = mineTokenMap[symbol];
         mineToken.withdrawETH(to, amount);
     }
