@@ -4,11 +4,12 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../uniswapv2/libraries/TransferHelper.sol";
 import "../interfaces/IMineToken.sol";
 import "../interfaces/IBitcoinOracle.sol";
 
-contract BtcMineToken is IMineToken, ERC20, Ownable {
+contract BtcMineToken is IMineToken, ERC20, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -45,14 +46,6 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     // Info of each miner that hold tokens.
     mapping (address => MinerInfo) public minerInfo;
 
-    uint private unlocked = 1;
-    modifier lock() {
-        require(unlocked == 1, 'BtcMineToken: LOCKED');
-        unlocked = 0;
-        _;
-        unlocked = 1;
-    }
-
     constructor(
         string memory _name,
         string memory _symbol
@@ -73,8 +66,8 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         uint _startTime,
         uint _endTime,
         string memory _comment
-    ) external onlyOwner {
-        require(block.timestamp < _buyStartTime && _buyStartTime < _buyEndTime && _buyEndTime < _startTime && _startTime < _endTime, "Invalid time");
+    ) external onlyOwner nonReentrant {
+        require(block.timestamp < _buyStartTime && _buyStartTime < _buyEndTime && _buyEndTime < _startTime && _startTime < _endTime, "BtcMineToken: Invalid time");
         require(bytes(_comment).length < 1024, "BtcMineToken: comment is too long!");
         btc = IERC20(_btc);
         btcDecimals = _btcDecimals;
@@ -94,17 +87,17 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     }
 
     // withdraw token from this minetoken
-    function withdrawToken(address _token, address _to, uint256 _amount) external override onlyOwner {
+    function withdrawToken(address _token, address _to, uint256 _amount) external override onlyOwner nonReentrant{
         TransferHelper.safeTransfer(_token, _to, _amount);
     }
 
     //withdraw ETH from this minetoken
-    function withdrawETH(address _to, uint256 _amount) external override onlyOwner {
+    function withdrawETH(address _to, uint256 _amount) external override onlyOwner nonReentrant{
         TransferHelper.safeTransferETH(_to, _amount);
     }
 
     // buy token
-    function buy(uint256 _amount) external lock override {
+    function buy(uint256 _amount) external nonReentrant override {
         require(buySupply.add(_amount) <= buyTotalSupply, "Buy supply capped");
         require(block.timestamp > buyStartTime, "Buy not start");
         require(block.timestamp <= buyEndTime, "Buy ended");
@@ -115,7 +108,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     }
 
     // harvest btc mine reward
-    function harvest(uint256 _amount) external lock override {
+    function harvest(uint256 _amount) external nonReentrant override {
         MinerInfo storage accountMinerInfo = minerInfo[msg.sender];
         if (accountMinerInfo.accReward < _amount) {
             accReward(msg.sender);
@@ -125,7 +118,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     }
 
     // harvest btc mine reward to _to address
-    function harvestTo(address _to, uint256 _numerator, uint256 _denominator) external lock override returns (uint256) {
+    function harvestTo(address _to, uint256 _numerator, uint256 _denominator) external nonReentrant override returns (uint256) {
         accReward(msg.sender);
         MinerInfo storage accountMinerInfo = minerInfo[msg.sender];
         uint256 _amount = _numerator.mul(accountMinerInfo.accReward).div(_denominator);
