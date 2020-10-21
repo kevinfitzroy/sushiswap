@@ -3,13 +3,17 @@ const IssuerManager = artifacts.require('IssuerManagerV1');
 const IssuerBTC = artifacts.require('IssuerBTC');
 const MockMigrator = artifacts.require('MockMigrator');
 const MineTokenManager = artifacts.require('MineTokenManager');
+const Multiowned = artifacts.require('Multiowned');
+const BitcoinOracle = artifacts.require('BitcoinOracle');
 
 const hostname = "minerswap.com";
 const zero_address = "0x0000000000000000000000000000000000000000";
 contract('IssuerManager', async ([boss, anyone, alice, bob]) => {
     beforeEach(async () => {
-        this.issuerManager = await IssuerManager.new((await MineTokenManager.new({from:boss})).address, {from: boss});
-        this.issuerBtc = await IssuerBTC.at((await this.issuerManager.registIssuerBTC(hostname, {from: alice})).logs[2].args.issuerAddress);
+        this.multiowned = await Multiowned.new([alice,bob], 2, {from: boss});
+        this.bitcoinOracle = await BitcoinOracle.new(this.multiowned.address, {from: anyone});
+        this.issuerManager = await IssuerManager.new((await MineTokenManager.new({from:boss})).address, this.bitcoinOracle.address, {from: boss});
+        this.issuerBtc = await IssuerBTC.at((await this.issuerManager.registIssuerBTC(hostname,1, {from: alice})).logs[2].args.issuerAddress);
     });
 
     it('should regist successfully', async () => {
@@ -18,11 +22,11 @@ contract('IssuerManager', async ([boss, anyone, alice, bob]) => {
 
     it('should not repeat registration', async () => {
         await expectRevert(
-            this.issuerManager.registIssuerBTC(hostname, {from: anyone}),
+            this.issuerManager.registIssuerBTC(hostname,2, {from: anyone}),
             "IssuerManager: hostname already exist!"
         );
         await this.issuerManager.removeIssuer(hostname, {from: boss});
-        await this.issuerManager.registIssuerBTC(hostname, {from: anyone});
+        await this.issuerManager.registIssuerBTC(hostname,3, {from: anyone});
 
         await expectRevert(
             this.issuerManager.addIssuer(hostname, this.issuerBtc.address, {from: boss}),
