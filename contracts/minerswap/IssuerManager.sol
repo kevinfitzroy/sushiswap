@@ -63,7 +63,7 @@ contract IssuerManagerV1 is Ownable {
         BTCConfig(btcConfig).update(name, addr, decimal);
     }
 
-    function registIssuerBTC(string memory hostname, uint256 _salt) external returns (address issuerAddress) {
+    function registIssuerBTC(string memory hostname, uint256 _salt) external returns (address payable issuerAddress) {
         require(issuerInfo[hostname] == address(0) ,"IssuerManager: hostname already exist!");
 
         bytes memory bytecode = type(IssuerBTC).creationCode;

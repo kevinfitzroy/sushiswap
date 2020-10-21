@@ -51,6 +51,8 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     ) public ERC20(_name, _symbol) {
     }
 
+    receive() external payable {}
+    
     function initialize(
         address _btc,
         uint8 _btcDecimals,

@@ -29,6 +29,8 @@ abstract contract Issuer is Ownable{
         mineTokenManager = _mineTokenManager;
     }
 
+    receive() external payable {}
+
     function incSerialNumber() internal returns(uint32){
         serialNumber++;
         return serialNumber;
