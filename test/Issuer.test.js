@@ -20,16 +20,17 @@ contract('Issuer and IssuerBTC', async ([boss, anyone, alice, bob, kevin, kim, a
         this.currencyToken = await MockERC20.new("usd", "usd", {from: anyone});
         this.issuerBtc = await IssuerBTC.at((await this.issuerManager.registIssuerBTC(hostname, 1, {from: boss})).logs[2].args.issuerAddress);
 
+        let now = Date.now()/1000|0;
         this.btcMineToken = await BtcMineToken.at((await this.issuerBtc.issue(
             "mbtc",
             this.currencyToken.address,
             23,//buy price
             35,//buy total supply
             10000,//pre mint number
-            3,//time
-            4,
-            5,
-            6,
+            now + 1,//time
+            now + 2,
+            now + 3,
+            now + 4,
             "mine token comment",
             {from: boss}
         )).logs[2].args.tokenAddress);
