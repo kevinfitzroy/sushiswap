@@ -63,12 +63,12 @@ contract IssuerManagerV1 is Ownable {
         BTCConfig(btcConfig).update(name, addr, decimal);
     }
 
-    function registIssuerBTC(string memory hostname) external returns (address issuerAddress) {
+    function registIssuerBTC(string memory hostname, uint256 _salt) external returns (address issuerAddress) {
         require(issuerInfo[hostname] == address(0) ,"IssuerManager: hostname already exist!");
 
         bytes memory bytecode = type(IssuerBTC).creationCode;
         bytecode = abi.encodePacked(bytecode, abi.encode(hostname, btcConfig, mineTokenManager));
-        bytes32 salt = keccak256(abi.encodePacked(hostname, block.timestamp));
+        bytes32 salt = keccak256(abi.encodePacked(hostname, block.timestamp, _salt));
         assembly {
             issuerAddress := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
