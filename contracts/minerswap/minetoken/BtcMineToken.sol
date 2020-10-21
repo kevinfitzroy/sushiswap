@@ -35,7 +35,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     // Btc reward end time
     uint public endTime;
 
-    string public comment; 
+    string public comment;
 
     struct MinerInfo {
         uint nextRewardTime; // Next cal reward time
@@ -44,6 +44,14 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
 
     // Info of each miner that hold tokens.
     mapping (address => MinerInfo) public minerInfo;
+
+    uint private unlocked = 1;
+    modifier lock() {
+        require(unlocked == 1, 'BtcMineToken: LOCKED');
+        unlocked = 0;
+        _;
+        unlocked = 1;
+    }
 
     constructor(
         string memory _name,
@@ -64,7 +72,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
         uint _endTime,
         string memory _comment
     ) external onlyOwner {
-        require(_buyStartTime < _buyEndTime && _buyEndTime < _startTime && _startTime < _endTime, "Invalid time");
+        require(block.timestamp < _buyStartTime && _buyStartTime < _buyEndTime && _buyEndTime < _startTime && _startTime < _endTime, "Invalid time");
         require(bytes(_comment).length < 1024, "BtcMineToken: comment is too long!");
         btc = IERC20(_btc);
         btcDecimals = _btcDecimals;
@@ -94,18 +102,18 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     }
 
     // buy token
-    function buy(uint256 _amount) external override {
+    function buy(uint256 _amount) external lock override {
         require(buySupply.add(_amount) <= buyTotalSupply, "Buy supply capped");
         require(block.timestamp > buyStartTime, "Buy not start");
         require(block.timestamp <= buyEndTime, "Buy ended");
         uint256 _buyValue = _amount.mul(buyPrice);
-        TransferHelper.safeTransferFrom(address(usdt), msg.sender, address(this), _buyValue);
         buySupply = buySupply.add(_amount);
+        TransferHelper.safeTransferFrom(address(usdt), msg.sender, address(this), _buyValue);
         _mint(msg.sender, _amount);
     }
 
     // harvest btc mine reward
-    function harvest(uint256 _amount) external override {
+    function harvest(uint256 _amount) external lock override {
         MinerInfo storage accountMinerInfo = minerInfo[msg.sender];
         if (accountMinerInfo.accReward < _amount) {
             accReward(msg.sender);
@@ -115,7 +123,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable {
     }
 
     // harvest btc mine reward to _to address
-    function harvestTo(address _to, uint256 _numerator, uint256 _denominator) external override returns (uint256) {
+    function harvestTo(address _to, uint256 _numerator, uint256 _denominator) external lock override returns (uint256) {
         accReward(msg.sender);
         MinerInfo storage accountMinerInfo = minerInfo[msg.sender];
         uint256 _amount = _numerator.mul(accountMinerInfo.accReward).div(_denominator);

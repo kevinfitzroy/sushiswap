@@ -24,11 +24,26 @@ contract BitcoinOracle is IBitcoinOracle {
     }
 
     function addBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external {
+        if (blockInfos.length > 0) {
+            require(_timestamp > blockInfos[blockInfos.length - 1].timestamp, "invalid timestamp");
+        }
         require(owner.confirmAndCheck(keccak256(msg.data)), "Multiowned: not owner or need more ticket!");
         blockInfos.push(BlockInfo({timestamp:_timestamp, rewardPerTPerSecond:_rewardPerTPerSecond}));
     }
 
+    function updateBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external {
+        require(blockInfos.length > 0, "invalid state");
+        require(owner.confirmAndCheck(keccak256(msg.data)), "Multiowned: not owner or need more ticket!");
+        if (blockInfos.length > 1) {
+            require(_timestamp > blockInfos[blockInfos.length - 2].timestamp, "invalid timestamp");
+        }
+        BlockInfo storage info = blockInfos[blockInfos.length - 1];
+        info.timestamp = _timestamp;
+        info.rewardPerTPerSecond = _rewardPerTPerSecond;
+    }
+
     function calReward(uint256 h, uint startTime, uint endTime, uint8 decimals) external override view returns (uint256) {
+        require(startTime < endTime, "invalid time");
         require(decimals <= 18, "decimals overflow");
         (bool success, uint endIndex) = findIndex(endTime);
         if (!success) {
@@ -38,7 +53,7 @@ contract BitcoinOracle is IBitcoinOracle {
         while(true) {
             uint _timestamp = blockInfos[endIndex].timestamp;
             uint _rewardPerTPerSecond = blockInfos[endIndex].rewardPerTPerSecond;
-            if (startTime > _timestamp) {
+            if (startTime >= _timestamp) {
                 reward = reward.add(_rewardPerTPerSecond.mul(endTime.sub(startTime)));
                 break;
             } else {
@@ -51,7 +66,7 @@ contract BitcoinOracle is IBitcoinOracle {
                 }
             }
         }
-        return reward == 0 ? 0 : reward.mul(h).div(10**(18-uint(decimals)));
+        return reward.mul(h)/10**(18-uint(decimals));
     }
 
     function findIndex(uint time) internal view returns (bool, uint) {
@@ -61,6 +76,8 @@ contract BitcoinOracle is IBitcoinOracle {
         uint latestBlockTime = blockInfos[blockInfos.length - 1].timestamp;
         if (time > latestBlockTime) {
             return (true, blockInfos.length - 1);
+        } else if (time <= blockInfos[0].timestamp) {
+            return (false, 0);
         } else {
             uint indexDiff = (latestBlockTime - time)/DIFF_ADJUST_PERIOD; // overflow will not happen
             uint index = 0;
