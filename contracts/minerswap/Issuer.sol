@@ -48,21 +48,31 @@ abstract contract Issuer is Ownable{
         mineToken = mineTokenMap[symbol];
     }
 
-    ///the owner can withdraw any erc20 token and eth
-    function withdraw(address token,address to,uint256 amount,string memory symbol) public onlyOwner{
-//        IMineToken mineToken = mineTokenMap[symbol];
+    ///the owner can withdraw any erc20 token from himself
+    function withdraw(address token, address to, uint256 amount) external onlyOwner{
         TransferHelper.safeTransfer(token, to, amount);
     }
 
-    // ///withdraw eth
-    // function withdrawETH(address to,uint256 amount, string memory symbol) public onlyOwner {
-    //     address mineToken = minePoolInfo[symbol];
-    //     TransferHelper.safeTransferETH(to, amount);
-    // }
+    ///withdraw eth from this contract 
+    function withdrawETH(address to, uint256 amount) external onlyOwner {
+        TransferHelper.safeTransferETH(to, amount);
+    }
 
-    ///the owner can mint any number tokens at any time!
+    ///withdraw token from minetoken through symbol
+    function withdrawFromMineToken(address token, string memory symbol, address to, uint256 amount) external onlyOwner{
+        IMineToken mineToken = mineTokenMap[symbol];
+        mineToken.withdrawToken(token, to, amount);
+    }
+
+    ///withdraw eth from minetoken through symbol
+    function withdrawETHFromMineToken(string memory symbol, address to, uint256 amount) external onlyOwner{
+        IMineToken mineToken = mineTokenMap[symbol];
+        mineToken.withdrawETH(to, amount);
+    }
+
+    ///the owner can mint any amount tokens at any time!
     function mint(string memory symbol,uint256 amount) public onlyOwner {
-        IMineToken(mineTokenMap[symbol]).mint(address(this) ,amount);
+        mineTokenMap[symbol].mint(address(this), amount);
     }
 
     function addLiquidity() public onlyOwner {
