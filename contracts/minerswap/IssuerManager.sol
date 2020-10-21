@@ -65,7 +65,8 @@ contract IssuerManagerV1 is Ownable {
 
     function registIssuerBTC(string memory hostname, uint256 _salt) external returns (address payable issuerAddress) {
         require(issuerInfo[hostname] == address(0) ,"IssuerManager: hostname already exist!");
-
+        require(bytes(hostname).length < 64, "IssuerManager: hostname is too long!");
+        
         bytes memory bytecode = type(IssuerBTC).creationCode;
         bytecode = abi.encodePacked(bytecode, abi.encode(hostname, btcConfig, mineTokenManager));
         bytes32 salt = keccak256(abi.encodePacked(hostname, block.timestamp, _salt));

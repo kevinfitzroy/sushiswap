@@ -36,6 +36,15 @@ contract('IssuerManager', async ([boss, anyone, alice, bob]) => {
         await this.issuerManager.addIssuer(hostname, this.issuerBtc.address, {from: boss});
     });
 
+    it('should hostname length lt 64 byte', async () => {
+        await expectRevert(
+            this.issuerManager.registIssuerBTC(
+            "hostname123456789012345678901234567890123456789012345678901234567890"    
+            ,2, {from: anyone}),
+            "IssuerManager: hostname is too long!"
+        );
+    });
+
     it('should fail if you are not owner', async () => {
         await expectRevert(
             this.issuerManager.addIssuer("xxx", bob, {from: anyone}),
