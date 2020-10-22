@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../interfaces/IMineToken.sol";
 
-contract MineTokenERC20 is IMineToken, ERC20 {
+abstract contract MineTokenERC20 is IMineToken, ERC20 {
 
     bytes32 public DOMAIN_SEPARATOR;
     // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
