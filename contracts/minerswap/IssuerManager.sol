@@ -5,14 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IssuerBTC.sol";
-import "./interfaces/IManagerMigrator.sol";
 import "./config/BTCConfig.sol";
 
 /// Ownable just for the migration function
 /// the version of V1 only include the BTC mine token
 contract IssuerManagerV1 is Ownable {
 
-    IManagerMigrator public migrator;
     address public btcConfig;
     address public mineTokenManager;
     address public bitcoinOracle;
@@ -39,15 +37,6 @@ contract IssuerManagerV1 is Ownable {
 
     function getBitcoinOracle() external view returns(address) {
         return bitcoinOracle;
-    }
-
-    function setMigrator(IManagerMigrator _migrator) external onlyOwner {
-        migrator = _migrator;
-    }
-    
-    function migrate() external {
-        require(address(migrator) != address(0), "migrate: no migrator");
-        //TODO migrate issuer info to new manager
     }
 
     function removeIssuer(string memory hostname) public onlyOwner {
