@@ -77,23 +77,7 @@ abstract contract Issuer is Ownable, ReentrancyGuard{
     function mint(string memory symbol,uint256 amount) public onlyOwner {
         mineTokenMap[symbol].mint(address(this), amount);
     }
-
-    function addLiquidity() public onlyOwner {
-
-    }
-
-    function removeLiquidity() public onlyOwner {
-
-    }
-
-    function addLiquidityETH () public onlyOwner {
-
-    }
-
-    function removeLiquidityETH() public onlyOwner {
-
-    }
-
+    
     string[] private sarr = ["0","1","2","3","4","5","6","7","8","9"];
     function uintToString(uint32 v) public view returns (string memory) {
         string memory strBuilder = "";
