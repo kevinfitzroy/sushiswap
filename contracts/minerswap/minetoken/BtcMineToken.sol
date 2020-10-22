@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../uniswapv2/libraries/TransferHelper.sol";
-import "../interfaces/IMineToken.sol";
 import "../interfaces/IBitcoinOracle.sol";
+import "./MineTokenERC20.sol";
 
-contract BtcMineToken is IMineToken, ERC20, Ownable, ReentrancyGuard {
+contract BtcMineToken is MineTokenERC20, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -49,7 +49,7 @@ contract BtcMineToken is IMineToken, ERC20, Ownable, ReentrancyGuard {
     constructor(
         string memory _name,
         string memory _symbol
-    ) public ERC20(_name, _symbol) {
+    ) public MineTokenERC20(_name, _symbol) {
     }
 
     receive() external payable {}
