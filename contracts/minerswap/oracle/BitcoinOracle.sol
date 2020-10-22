@@ -1,10 +1,10 @@
 pragma solidity 0.6.12;
 
 import "../interfaces/IBitcoinOracle.sol";
-import "../interfaces/IMultiowned.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "../ownership/Multiowned.sol";
 
-contract BitcoinOracle is IBitcoinOracle {
+contract BitcoinOracle is IBitcoinOracle, Multiowned {
     using SafeMath for uint256;
 
     // Bitcoin diff adjust for about every 14 days
@@ -12,30 +12,32 @@ contract BitcoinOracle is IBitcoinOracle {
 
     // Bitcoin block info every 2016 blocks when diff adjust
     BlockInfo[] public blockInfos;
-    IMultiowned owner;
 
     struct BlockInfo {
         uint timestamp; // Block timestamp
         uint rewardPerTPerSecond; // Mine reward per Th per second, decimals is 18
     }
 
-    constructor (IMultiowned _owner) public {
-        owner = _owner;
+    constructor (address[] memory _owners, uint _required) public Multiowned(_owners, _required) {
     }
 
-    function addBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external {
+    function addBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external onlyowner {
         if (blockInfos.length > 0) {
             require(_timestamp > blockInfos[blockInfos.length - 1].timestamp, "invalid timestamp");
         }
-        require(owner.confirmAndCheck(keccak256(msg.data)), "Multiowned: not owner or need more ticket!");
+        if (!confirmAndCheck(keccak256(msg.data))) {
+            return;
+        }
         blockInfos.push(BlockInfo({timestamp:_timestamp, rewardPerTPerSecond:_rewardPerTPerSecond}));
     }
 
-    function updateBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external {
+    function updateLatestBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external onlyowner {
         require(blockInfos.length > 0, "invalid state");
-        require(owner.confirmAndCheck(keccak256(msg.data)), "Multiowned: not owner or need more ticket!");
         if (blockInfos.length > 1) {
             require(_timestamp > blockInfos[blockInfos.length - 2].timestamp, "invalid timestamp");
+        }
+        if (!confirmAndCheck(keccak256(msg.data))) {
+            return;
         }
         BlockInfo storage info = blockInfos[blockInfos.length - 1];
         info.timestamp = _timestamp;
