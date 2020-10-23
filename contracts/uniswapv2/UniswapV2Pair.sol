@@ -157,11 +157,11 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
         ///MINERSWAP start
         //not support both of two tokens are minetoken
-        (bool call_success, bytes memory call_data) = _token0.call(abi.encodeWithSelector(0xfbe3b124));
+        (bool call_success, ) = _token0.call(abi.encodeWithSelector(0xfbe3b124));
         if (call_success){
             IMineToken(_token0).harvestTo(to, liquidity, _totalSupply);
         }else{
-            (call_success, call_data) = _token1.call(abi.encodeWithSelector(0xfbe3b124));
+            (call_success, ) = _token1.call(abi.encodeWithSelector(0xfbe3b124));
             if (call_success){
                 IMineToken(_token1).harvestTo(to, liquidity, _totalSupply);
             }
