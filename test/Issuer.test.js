@@ -6,14 +6,12 @@ const BtcMineToken = artifacts.require('BtcMineToken');
 const MockERC20 = artifacts.require('MockERC20');
 const BitcoinOracle = artifacts.require('BitcoinOracle');
 const MineTokenManager = artifacts.require('MineTokenManager');
-const Multiowned = artifacts.require('Multiowned');
 const BN = require('bn.js');
 
 const hostname = "minerswap.com";
-contract('Issuer and IssuerBTC', async ([boss, anyone, alice, bob, kevin, kim, anyone2]) => {
+contract('Issuer and IssuerBTC', async ([boss, anyone, alice, bob, kevin, kim, anyone2, jone]) => {
     beforeEach(async () => {
-        this.multiowned = await Multiowned.new([alice,bob], 2, {from: boss});
-        this.bitcoinOracle = await BitcoinOracle.new(this.multiowned.address, {from: anyone2});
+        this.bitcoinOracle = await BitcoinOracle.new({from: anyone2});
         this.mbtc = await MockERC20.new("mbtc", "mbtc", {from: anyone});
         this.issuerManager = await IssuerManager.new((await MineTokenManager.new({from: alice})).address, this.bitcoinOracle.address, {from: alice});
         await this.issuerManager.updateBtcConfig('mbtc', this.mbtc.address, 18, {from: alice});
@@ -95,5 +93,40 @@ contract('Issuer and IssuerBTC', async ([boss, anyone, alice, bob, kevin, kim, a
         let acu = new BN((await web3.eth.getBalance(alice)).valueOf(), 10);
         assert.equal(expt.toString(16), acu.toString(16));
     });
+
+    context('tutorials for front end',()=>{
+        beforeEach(async () => {
+            await this.issuerBtc.mint("mtBTC1", 10000, {from: boss});
+            await this.issuerBtc.withdraw(this.btcMineToken.address, jone, 1500, {from: boss});
+        });
+        it('how to get minetokens belonging to the user through the address', async ()=> {
+            //step1: front end known some hostname
+            let hostname1 = hostname;
+    
+            //step2: get issuer address through hostname
+            let issuerAddress = await this.issuerManager.getIssuerAddress(hostname1);//this.issuerManager is unique contract address
+            let issuer = await IssuerBTC.at(issuerAddress);
+
+            //step3: get minetoken address through serialNumber and SYMBOL
+            let serialNumber = (await issuer.serialNumber()).valueOf().toNumber();
+            let symbol = (await issuer.SYMBOL().valueOf());
+            let minetokens = [];
+            for(var sn = 1; sn <= serialNumber; sn++){
+                let mt = (await issuer.getMineToken(symbol + sn)).valueOf();
+                minetokens.push(mt);
+            }
+
+            //step4: iterate minetokens for user address
+            minetokens.forEach(async (val) => {
+                let minetoken = await BtcMineToken.at(val);
+                let balance = await minetoken.balanceOf({from: jone})
+                if(val == this.btcMineToken.address){
+                    assert.equal(balance.toNumber(),1500);
+                }
+            })
+
+        });
+    });
+    
 
 });

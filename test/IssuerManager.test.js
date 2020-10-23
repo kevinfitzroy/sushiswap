@@ -3,15 +3,13 @@ const IssuerManager = artifacts.require('IssuerManagerV1');
 const IssuerBTC = artifacts.require('IssuerBTC');
 const MockMigrator = artifacts.require('MockMigrator');
 const MineTokenManager = artifacts.require('MineTokenManager');
-const Multiowned = artifacts.require('Multiowned');
 const BitcoinOracle = artifacts.require('BitcoinOracle');
 
 const hostname = "minerswap.com";
 const zero_address = "0x0000000000000000000000000000000000000000";
 contract('IssuerManager', async ([boss, anyone, alice, bob]) => {
     beforeEach(async () => {
-        this.multiowned = await Multiowned.new([alice,bob], 2, {from: boss});
-        this.bitcoinOracle = await BitcoinOracle.new(this.multiowned.address, {from: anyone});
+        this.bitcoinOracle = await BitcoinOracle.new({from: anyone});
         this.issuerManager = await IssuerManager.new((await MineTokenManager.new({from:boss})).address, this.bitcoinOracle.address, {from: boss});
         this.issuerBtc = await IssuerBTC.at((await this.issuerManager.registIssuerBTC(hostname,1, {from: alice})).logs[2].args.issuerAddress);
     });
@@ -60,14 +58,14 @@ contract('IssuerManager', async ([boss, anyone, alice, bob]) => {
         assert.equal((await this.issuerBtc.owner()).valueOf(), alice);
     });
 
-    it('should migrator work correctly', async () => {
-        this.mockMigrator = await MockMigrator.new({ from: anyone});
-        assert.equal(zero_address, await this.issuerManager.migrator());
-        await expectRevert(
-            this.issuerManager.setMigrator(this.mockMigrator.address, {from: bob}),
-            'Ownable: caller is not the owner',
-        );
-        await this.issuerManager.setMigrator(this.mockMigrator.address, {from: boss});
-        assert.equal(this.mockMigrator.address, await this.issuerManager.migrator());
-    });
+    // it('should migrator work correctly', async () => {
+    //     this.mockMigrator = await MockMigrator.new({ from: anyone});
+    //     assert.equal(zero_address, await this.issuerManager.migrator());
+    //     await expectRevert(
+    //         this.issuerManager.setMigrator(this.mockMigrator.address, {from: bob}),
+    //         'Ownable: caller is not the owner',
+    //     );
+    //     await this.issuerManager.setMigrator(this.mockMigrator.address, {from: boss});
+    //     assert.equal(this.mockMigrator.address, await this.issuerManager.migrator());
+    // });
 });
