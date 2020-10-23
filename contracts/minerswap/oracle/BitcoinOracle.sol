@@ -2,9 +2,9 @@ pragma solidity 0.6.12;
 
 import "../interfaces/IBitcoinOracle.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../ownership/Multiowned.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BitcoinOracle is IBitcoinOracle, Multiowned {
+contract BitcoinOracle is IBitcoinOracle, Ownable {
     using SafeMath for uint256;
 
     // Bitcoin diff adjust for about every 14 days
@@ -18,26 +18,20 @@ contract BitcoinOracle is IBitcoinOracle, Multiowned {
         uint rewardPerTPerSecond; // Mine reward per Th per second, decimals is 18
     }
 
-    constructor (address[] memory _owners, uint _required) public Multiowned(_owners, _required) {
+    constructor () public {
     }
 
-    function addBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external onlyowner {
+    function addBlockInfo(uint _timestamp, uint _rewardPerTPerSecond) external onlyOwner {
         if (blockInfos.length > 0) {
             require(_timestamp > blockInfos[blockInfos.length - 1].timestamp, "invalid timestamp");
-        }
-        if (!confirmAndCheck(keccak256(msg.data))) {
-            return;
         }
         blockInfos.push(BlockInfo({timestamp:_timestamp, rewardPerTPerSecond:_rewardPerTPerSecond}));
     }
 
-    function updateLatestBlockInfo(uint _timestamp, uint _rewardPerTPerSecond, bytes32 _blockHeaderHash) external onlyowner {
+    function updateLatestBlockInfo(uint _timestamp, uint _rewardPerTPerSecond) external onlyOwner {
         require(blockInfos.length > 0, "invalid state");
         if (blockInfos.length > 1) {
             require(_timestamp > blockInfos[blockInfos.length - 2].timestamp, "invalid timestamp");
-        }
-        if (!confirmAndCheck(keccak256(msg.data))) {
-            return;
         }
         BlockInfo storage info = blockInfos[blockInfos.length - 1];
         info.timestamp = _timestamp;

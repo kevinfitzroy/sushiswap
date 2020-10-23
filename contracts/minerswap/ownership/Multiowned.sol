@@ -59,6 +59,15 @@ contract Multiowned {
         m_required = _required;
     }
 
+    // make a multi owner proxy to target
+    function proxy(address target, bytes memory data) external onlyowner {
+        if (!confirmAndCheck(keccak256(msg.data))) {
+           return;
+        }
+        (bool success, ) = target.call(data);
+        require(success, "proxy failed");
+    }
+
     // Revokes a prior confirmation of the given operation
     function revoke(bytes32 _operation) external onlyowner {
         uint ownerIndex = m_ownerIndex[uint(msg.sender)];
