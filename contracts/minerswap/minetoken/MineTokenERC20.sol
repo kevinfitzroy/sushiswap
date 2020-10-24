@@ -44,6 +44,8 @@ abstract contract MineTokenERC20 is IMineToken, ERC20 {
     }
 
     //0xfbe3b124  bytes4(keccak256(bytes('MINT_TOKEN_IDENTITY_FUNCTION()')))
-    function MINT_TOKEN_IDENTITY_FUNCTION() external view {}
+    function MINT_TOKEN_IDENTITY_FUNCTION() external view returns(bytes4){
+        return 0xfbe3b124;
+    }
 
 }
